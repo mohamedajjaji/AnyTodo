@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     full_name = models.CharField(max_length=255)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
 
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -4,7 +4,7 @@ from .models import User, Task
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'full_name']
+        fields = ['username', 'email', 'password', 'full_name', 'profile_picture']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -12,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             username=validated_data['username'],
             full_name=validated_data['full_name'],
+            profile_picture=validated_data.get('profile_picture')
         )
         user.set_password(validated_data['password'])
         user.save()
