@@ -12,6 +12,7 @@ const Profile = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [usernameForDeletion, setUsernameForDeletion] = useState('');
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,6 +72,7 @@ const Profile = () => {
       setOldPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
+      setShowChangePassword(false);
     } catch (error) {
       console.error(error);
       alert('An error occurred while changing the password.');
@@ -124,43 +126,70 @@ const Profile = () => {
           onChange={(e) => setProfilePicture(e.target.files[0])}
           className="mb-4 p-2 w-full border border-gray-300 rounded"
         />
-        <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded">Update Profile</button>
-      </form>
+        <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded mb-4">Update Profile</button>
 
-      <form onSubmit={handleChangePassword} className="bg-white p-6 rounded shadow-md w-80 mt-4">
-        <h2 className="text-2xl mb-4 text-center">Change Password</h2>
-        <input
-          type="password"
-          placeholder="Old Password"
-          value={oldPassword}
-          onChange={(e) => setOldPassword(e.target.value)}
-          className="mb-4 p-2 w-full border border-gray-300 rounded"
-        />
-        <input
-          type="password"
-          placeholder="New Password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="mb-4 p-2 w-full border border-gray-300 rounded"
-        />
-        <input
-          type="password"
-          placeholder="Confirm New Password"
-          value={confirmNewPassword}
-          onChange={(e) => setConfirmNewPassword(e.target.value)}
-          className="mb-4 p-2 w-full border border-gray-300 rounded"
-        />
-        <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded">Change Password</button>
-      </form>
-
-      <div className="bg-white p-6 rounded shadow-md w-80 mt-4">
         <button
+          type="button"
+          onClick={() => setShowChangePassword(true)}
+          className="bg-blue-500 text-white p-2 w-full rounded mb-4"
+        >
+          Change Password
+        </button>
+
+        <button
+          type="button"
           onClick={() => setShowDeleteWarning(true)}
           className="bg-red-500 text-white p-2 w-full rounded"
         >
           Delete Account
         </button>
-      </div>
+      </form>
+
+      {showChangePassword && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded shadow-md w-80">
+            <h2 className="text-2xl mb-4 text-center">Change Password</h2>
+            <form onSubmit={handleChangePassword}>
+              <input
+                type="password"
+                placeholder="Old Password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="mb-4 p-2 w-full border border-gray-300 rounded"
+              />
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="mb-4 p-2 w-full border border-gray-300 rounded"
+              />
+              <input
+                type="password"
+                placeholder="Confirm New Password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="mb-4 p-2 w-full border border-gray-300 rounded"
+              />
+              <div className="flex justify-between">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white p-2 rounded"
+                >
+                  Change Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowChangePassword(false)}
+                  className="bg-gray-500 text-white p-2 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showDeleteWarning && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
