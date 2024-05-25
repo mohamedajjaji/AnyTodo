@@ -12,11 +12,21 @@ class UserSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             username=validated_data['username'],
             full_name=validated_data['full_name'],
-            profile_picture=validated_data.get('profile_picture')
+            profile_picture=validated_data.get('profile_picture'),
         )
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
+    def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
+        instance.full_name = validated_data.get('full_name', instance.full_name)
+        if 'password' in validated_data:
+            instance.set_password(validated_data['password'])
+        if 'profile_picture' in validated_data:
+            instance.profile_picture = validated_data['profile_picture']
+        instance.save()
+        return instance
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
