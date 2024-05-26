@@ -6,13 +6,16 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(null);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [usernameForDeletion, setUsernameForDeletion] = useState('');
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  const [deletePictureFlag, setDeletePictureFlag] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +29,9 @@ const Profile = () => {
         setUser(response.data);
         setFullName(response.data.full_name);
         setEmail(response.data.email);
+        if (response.data.profile_picture) {
+          setProfilePictureUrl(`http://localhost:8000${response.data.profile_picture}`);
+        }
       } catch (error) {
         console.error(error);
       }
@@ -33,22 +39,43 @@ const Profile = () => {
     fetchUser();
   }, []);
 
+  const fetchUpdatedUser = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/profile/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setUser(response.data);
+      setFullName(response.data.full_name);
+      setEmail(response.data.email);
+      if (response.data.profile_picture) {
+        setProfilePictureUrl(`http://localhost:8000${response.data.profile_picture}`);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append('full_name', fullName);
     formData.append('email', email);
-    if (profilePicture) {
-      formData.append('profile_picture', profilePicture);
+    if (profilePictureFile) {
+      formData.append('profile_picture', profilePictureFile);
+    }
+    if (deletePictureFlag) {
+      formData.append('delete_picture', 'true');
     }
     try {
-      const response = await axios.put('http://localhost:8000/api/profile/', formData, {
+      await axios.put('http://localhost:8000/api/profile/', formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-      setUser(response.data);
+      await fetchUpdatedUser();
       alert('Profile updated successfully.');
     } catch (error) {
       console.error(error);
@@ -99,14 +126,59 @@ const Profile = () => {
     }
   };
 
+  const handleDeletePicture = () => {
+    setProfilePictureFile(null);
+    setDeletePictureFlag(true);
+    setProfilePictureUrl(null);
+  };
+
   if (!user) {
     return <div>Loading...</div>;
   }
 
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    const url = URL.createObjectURL(file);
+    setProfilePictureUrl(url);
+    setProfilePictureFile(file);
+    setDeletePictureFlag(false);
+  };
+
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : '';
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <form onSubmit={handleUpdateProfile} className="bg-white p-6 rounded shadow-md w-80">
-        <h2 className="text-2xl mb-4 text-center">Profile</h2>
+        <div 
+          className="relative flex justify-center mb-4" 
+          onMouseEnter={() => setShowDeleteButton(true)}
+          onMouseLeave={() => setShowDeleteButton(false)}
+        >
+          {profilePictureUrl ? (
+            <div className="relative w-24 h-24">
+              <img
+                src={profilePictureUrl}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover"
+              />
+              {showDeleteButton && (
+                <button 
+                  type="button"
+                  className="absolute inset-0 flex items-center justify-center w-full h-full bg-black bg-opacity-50 text-white text-3xl rounded-full"
+                  onClick={handleDeletePicture}
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-gray-500 text-3xl">
+              {getInitial(fullName)}
+            </div>
+          )}
+        </div>
         <input
           type="text"
           placeholder="Full Name"
@@ -123,7 +195,7 @@ const Profile = () => {
         />
         <input
           type="file"
-          onChange={(e) => setProfilePicture(e.target.files[0])}
+          onChange={handleProfilePictureChange}
           className="mb-4 p-2 w-full border border-gray-300 rounded"
         />
         <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded mb-4">Update Profile</button>

@@ -28,8 +28,12 @@ def profile(request):
 
     elif request.method == 'PUT':
         data = request.data.copy()
-        if 'profile_picture' in request.FILES:
+        if 'delete_picture' in data and data['delete_picture'] == 'true':
+            user.profile_picture.delete()
+            user.profile_picture = None
+        elif 'profile_picture' in request.FILES:
             data['profile_picture'] = request.FILES['profile_picture']
+        
         serializer = UserSerializer(user, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
