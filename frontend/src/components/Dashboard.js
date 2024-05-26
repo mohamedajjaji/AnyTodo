@@ -9,8 +9,7 @@ const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [editTaskId, setEditTaskId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
-  // eslint-disable-next-line
-  const [remindMeTaskId, setRemindMeTaskId] = useState(null);
+  const [alert, setAlert] = useState({ type: '', message: '', show: false });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +23,7 @@ const Dashboard = () => {
         setTasks(response.data);
       } catch (error) {
         console.error(error);
+        setAlert({ type: 'error', message: 'Error fetching tasks.', show: true });
       }
     };
     fetchTasks();
@@ -48,8 +48,10 @@ const Dashboard = () => {
       setTasks(tasks.map(task => (task.id === editTaskId ? { ...task, title: editTitle } : task)));
       setEditTaskId(null);
       setEditTitle('');
+      setAlert({ type: 'success', message: 'Task title updated successfully.', show: true });
     } catch (error) {
       console.error(`Error updating task with ID: ${editTaskId}`, error);
+      setAlert({ type: 'error', message: 'Error updating task.', show: true });
     }
   };
 
@@ -66,9 +68,10 @@ const Dashboard = () => {
         }
       );
       setTasks(tasks.map(task => (task.id === taskId ? { ...task, remind_me: !task.remind_me } : task)));
-      setRemindMeTaskId(null);
+      setAlert({ type: 'success', message: 'Task reminder updated.', show: true });
     } catch (error) {
       console.error(`Error updating task with ID: ${taskId}`, error);
+      setAlert({ type: 'error', message: 'Error updating task reminder.', show: true });
     }
   };
 
@@ -80,8 +83,10 @@ const Dashboard = () => {
         },
       });
       setTasks(tasks.filter(task => task.id !== taskId));
+      setAlert({ type: 'success', message: 'Task deleted successfully.', show: true });
     } catch (error) {
       console.error(`Error deleting task with ID: ${taskId}`, error);
+      setAlert({ type: 'error', message: 'Error deleting task.', show: true });
     }
   };
 
@@ -89,12 +94,18 @@ const Dashboard = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
-  
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-	  <div className="flex justify-between items-center mb-4">
+      {alert.show && (
+        <div className={`fixed top-4 right-4 p-4 rounded shadow-md ${alert.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+          {alert.message}
+          <button className="ml-4" onClick={() => setAlert({ ...alert, show: false })}>×</button>
+        </div>
+      )}
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-	    <Menu as="div" className="relative inline-block text-left">
+        <Menu as="div" className="relative inline-block text-left">
           <Menu.Button className="flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
             <FiUser className="h-6 w-6" />
           </Menu.Button>
@@ -137,7 +148,7 @@ const Dashboard = () => {
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="border rounded p-2"
+                  className={`border rounded p-2 ${editTitle === '' ? 'border-red-500' : ''}`}
                 />
                 <button onClick={handleEditSubmit} className="ml-2 bg-blue-500 text-white p-2 rounded">
                   Save
