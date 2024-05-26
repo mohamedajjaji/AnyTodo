@@ -17,6 +17,7 @@ const Profile = () => {
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [deletePictureFlag, setDeletePictureFlag] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '', show: false });
+  const [passwordErrors, setPasswordErrors] = useState({ oldPassword: false, newPassword: false, confirmNewPassword: false });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,6 +87,33 @@ const Profile = () => {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
+
+    setPasswordErrors({ oldPassword: false, newPassword: false, confirmNewPassword: false });
+
+    if (!oldPassword) {
+      setPasswordErrors(prevErrors => ({ ...prevErrors, oldPassword: true }));
+      setAlert({ type: 'error', message: 'Old password is required.', show: true });
+      return;
+    }
+
+    if (!newPassword) {
+      setPasswordErrors(prevErrors => ({ ...prevErrors, newPassword: true }));
+      setAlert({ type: 'error', message: 'New password is required.', show: true });
+      return;
+    }
+
+    if (!confirmNewPassword) {
+      setPasswordErrors(prevErrors => ({ ...prevErrors, confirmNewPassword: true }));
+      setAlert({ type: 'error', message: 'Confirmation of new password is required.', show: true });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordErrors({ newPassword: true, confirmNewPassword: true });
+      setAlert({ type: 'error', message: 'New password and confirmation do not match.', show: true });
+      return;
+    }
+
     try {
       const response = await axios.post('http://localhost:8000/api/change_password/', {
         old_password: oldPassword,
@@ -103,7 +131,12 @@ const Profile = () => {
       setShowChangePassword(false);
     } catch (error) {
       console.error(error);
-      setAlert({ type: 'error', message: 'An error occurred while changing the password.', show: true });
+      if (error.response && error.response.data && error.response.data.old_password) {
+        setPasswordErrors(prevErrors => ({ ...prevErrors, oldPassword: true }));
+        setAlert({ type: 'error', message: error.response.data.old_password, show: true });
+      } else {
+        setAlert({ type: 'error', message: 'An error occurred while changing the password.', show: true });
+      }
     }
   };
 
@@ -234,21 +267,21 @@ const Profile = () => {
                 placeholder="Old Password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
-                className="mb-4 p-2 w-full border border-gray-300 rounded"
+                className={`mb-4 p-2 w-full border ${passwordErrors.oldPassword ? 'border-red-500' : 'border-gray-300'} rounded`}
               />
               <input
                 type="password"
                 placeholder="New Password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="mb-4 p-2 w-full border border-gray-300 rounded"
+                className={`mb-4 p-2 w-full border ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'} rounded`}
               />
               <input
                 type="password"
                 placeholder="Confirm New Password"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
-                className="mb-4 p-2 w-full border border-gray-300 rounded"
+                className={`mb-4 p-2 w-full border ${passwordErrors.confirmNewPassword ? 'border-red-500' : 'border-gray-300'} rounded`}
               />
               <div className="flex justify-between">
                 <button
