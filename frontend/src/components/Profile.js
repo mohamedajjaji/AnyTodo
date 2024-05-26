@@ -16,6 +16,7 @@ const Profile = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [deletePictureFlag, setDeletePictureFlag] = useState(false);
+  const [alert, setAlert] = useState({ type: '', message: '', show: false });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,10 +77,10 @@ const Profile = () => {
         },
       });
       await fetchUpdatedUser();
-      alert('Profile updated successfully.');
+      setAlert({ type: 'success', message: 'Profile updated successfully.', show: true });
     } catch (error) {
       console.error(error);
-      alert('An error occurred while updating the profile.');
+      setAlert({ type: 'error', message: 'An error occurred while updating the profile.', show: true });
     }
   };
 
@@ -95,14 +96,14 @@ const Profile = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      alert(response.data.detail);
+      setAlert({ type: 'success', message: response.data.detail, show: true });
       setOldPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
       setShowChangePassword(false);
     } catch (error) {
       console.error(error);
-      alert('An error occurred while changing the password.');
+      setAlert({ type: 'error', message: 'An error occurred while changing the password.', show: true });
     }
   };
 
@@ -117,12 +118,12 @@ const Profile = () => {
           username: usernameForDeletion,
         },
       });
-      alert(response.data.detail);
+      setAlert({ type: 'success', message: response.data.detail, show: true });
       localStorage.removeItem('token');
       navigate('/signup');
     } catch (error) {
       console.error(error);
-      alert('An error occurred while deleting the account.');
+      setAlert({ type: 'error', message: 'An error occurred while deleting the account.', show: true });
     }
   };
 
@@ -150,6 +151,12 @@ const Profile = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      {alert.show && (
+        <div className={`fixed top-4 right-4 p-4 rounded shadow-md ${alert.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+          {alert.message}
+          <button className="ml-4" onClick={() => setAlert({ ...alert, show: false })}>×</button>
+        </div>
+      )}
       <form onSubmit={handleUpdateProfile} className="bg-white p-6 rounded shadow-md w-80">
         <div 
           className="relative flex justify-center mb-4" 
@@ -161,7 +168,7 @@ const Profile = () => {
               <img
                 src={profilePictureUrl}
                 alt="Profile"
-                className="w-24 h-24 rounded-full object-cover"
+                className="w-full h-full rounded-full object-cover"
               />
               {showDeleteButton && (
                 <button 
