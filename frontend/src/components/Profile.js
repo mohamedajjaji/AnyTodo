@@ -32,7 +32,9 @@ const Profile = () => {
         setFullName(response.data.full_name);
         setEmail(response.data.email);
         if (response.data.profile_picture) {
-          setProfilePictureUrl(`http://localhost:8000${response.data.profile_picture}`);
+          const profilePictureUrl = `http://localhost:8000${response.data.profile_picture}`;
+          setProfilePictureUrl(profilePictureUrl);
+          localStorage.setItem('profilePicture', profilePictureUrl);
         }
       } catch (error) {
         console.error(error);
@@ -52,7 +54,12 @@ const Profile = () => {
       setFullName(response.data.full_name);
       setEmail(response.data.email);
       if (response.data.profile_picture) {
-        setProfilePictureUrl(`http://localhost:8000${response.data.profile_picture}`);
+        const profilePictureUrl = `http://localhost:8000${response.data.profile_picture}`;
+        setProfilePictureUrl(profilePictureUrl);
+        localStorage.setItem('profilePicture', profilePictureUrl);
+      } else {
+        setProfilePictureUrl(null);
+        localStorage.removeItem('profilePicture');
       }
     } catch (error) {
       console.error(error);
@@ -164,6 +171,7 @@ const Profile = () => {
     setProfilePictureFile(null);
     setDeletePictureFlag(true);
     setProfilePictureUrl(null);
+    localStorage.removeItem('profilePicture');
   };
 
   if (!user) {
