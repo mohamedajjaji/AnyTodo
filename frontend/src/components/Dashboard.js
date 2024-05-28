@@ -98,9 +98,10 @@ const Dashboard = () => {
       return;
     }
     try {
+      const currentDateTime = dayjs().format();
       const response = await axios.post(
         'http://localhost:8000/api/tasks/',
-        { title: newTaskTitle },
+        { title: newTaskTitle, due_date: currentDateTime },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
