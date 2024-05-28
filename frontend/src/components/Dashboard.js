@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu } from '@headlessui/react';
-import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUser, FiSearch, FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
+import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUser, FiSearch, FiChevronDown, FiMenu, FiArrowLeft } from 'react-icons/fi';
+import TaskDetails from './TaskDetails';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import dayjs from 'dayjs';
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -15,41 +18,42 @@ const Dashboard = () => {
   const [fullName, setFullName] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/tasks/', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        setTasks(response.data);
-        setFilteredTasks(response.data);
-      } catch (error) {
-        console.error(error);
-        setAlert({ type: 'error', message: 'Error fetching tasks.', show: true });
-      }
-    };
-
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/profile/', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        setFullName(response.data.full_name);
-        setProfilePicture(localStorage.getItem('profilePicture'));
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     fetchTasks();
     fetchUserProfile();
   }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/tasks/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setTasks(response.data);
+      setFilteredTasks(response.data);
+    } catch (error) {
+      console.error(error);
+      setAlert({ type: 'error', message: 'Error fetching tasks.', show: true });
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/profile/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setFullName(response.data.full_name);
+      setProfilePicture(localStorage.getItem('profilePicture'));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     if (alert.show) {
@@ -97,6 +101,7 @@ const Dashboard = () => {
       setFilteredTasks([...tasks, response.data]);
       setNewTaskTitle('');
       setAlert({ type: 'success', message: 'Task added successfully.', show: true });
+      setSelectedTaskId(response.data.id);
     } catch (error) {
       console.error('Error adding task:', error);
       setAlert({ type: 'error', message: 'Error adding task.', show: true });
@@ -124,6 +129,7 @@ const Dashboard = () => {
       setEditTaskId(null);
       setEditTitle('');
       setAlert({ type: 'success', message: 'Task title updated successfully.', show: true });
+      setSelectedTaskId(editTaskId);
     } catch (error) {
       console.error(`Error updating task with ID: ${editTaskId}`, error);
       setAlert({ type: 'error', message: 'Error updating task.', show: true });
@@ -145,6 +151,7 @@ const Dashboard = () => {
       setTasks(tasks.map(task => (task.id === taskId ? { ...task, remind_me: !task.remind_me } : task)));
       setFilteredTasks(filteredTasks.map(task => (task.id === taskId ? { ...task, remind_me: !task.remind_me } : task)));
       setAlert({ type: 'success', message: 'Task reminder updated.', show: true });
+      setSelectedTaskId(taskId);
     } catch (error) {
       console.error(`Error updating task with ID: ${taskId}`, error);
       setAlert({ type: 'error', message: 'Error updating task reminder.', show: true });
@@ -161,6 +168,9 @@ const Dashboard = () => {
       setTasks(tasks.filter(task => task.id !== taskId));
       setFilteredTasks(filteredTasks.filter(task => task.id !== taskId));
       setAlert({ type: 'success', message: 'Task deleted successfully.', show: true });
+      if (selectedTaskId === taskId) {
+        setSelectedTaskId(null);
+      }
     } catch (error) {
       console.error(`Error deleting task with ID: ${taskId}`, error);
       setAlert({ type: 'error', message: 'Error deleting task.', show: true });
@@ -176,37 +186,57 @@ const Dashboard = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const handleTaskClick = (taskId) => {
+    setSelectedTaskId(taskId);
+  };
+
+  const handleFilter = (filterType) => {
+    let filtered = [];
+    const today = dayjs().startOf('day');
+
+    if (filterType === 'day') {
+      filtered = tasks.filter(task => dayjs(task.due_date).isSame(today, 'day'));
+    } else if (filterType === 'week') {
+      const nextWeek = today.add(7, 'day');
+      filtered = tasks.filter(task => dayjs(task.due_date).isBefore(nextWeek, 'day'));
+    } else {
+      filtered = tasks;
+    }
+
+    setFilteredTasks(filtered);
+  };
+
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex flex-col bg-gray-100 md:flex-row">
       {alert.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded shadow-md ${alert.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
           {alert.message}
           <button className="ml-4" onClick={() => setAlert({ ...alert, show: false })}>×</button>
         </div>
       )}
-      <aside className={`fixed z-40 top-0 left-0 w-64 h-dvh bg-white shadow-md transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
+      <aside className={`fixed z-40 top-0 left-0 w-64 bg-white shadow-md transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
         <div className="px-8 py-4 flex justify-between items-center">
           <img src="/anytodo_logo.svg" alt="AnyTodo Logo" className="w-max mb-6 mt-6 mx-auto" />
           <button className="md:hidden" onClick={handleSidebarToggle}>
-            <FiX className="text-2xl" />
+            <FiArrowLeft className="text-2xl" />
           </button>
         </div>
-        <nav className="flex-1 px-4 overflow-y-auto">
+        <nav className="flex-1 px-4 h-screen overflow-y-auto">
           <ul>
             <li>
-              <Link to="/" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
+              <button onClick={() => handleFilter('day')} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiSun className="mr-2" /> My Day
-              </Link>
+              </button>
             </li>
             <li>
-              <Link to="/" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
+              <button onClick={() => handleFilter('week')} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiCalendar className="mr-2" /> Next 7 Days
-              </Link>
+              </button>
             </li>
             <li>
-              <Link to="/" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
+              <button onClick={() => handleFilter('all')} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiClipboard className="mr-2" /> All My Tasks
-              </Link>
+              </button>
             </li>
             <li>
               <Link to="/" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
@@ -216,7 +246,7 @@ const Dashboard = () => {
           </ul>
         </nav>
       </aside>
-      <main className="flex-1 p-6 md:ml-max">
+      <main className="flex-1 p-6 md:ml-max relative">
         <div className="flex justify-between items-center mb-4 bg-white p-4 rounded shadow">
           <button onClick={handleSidebarToggle} className="md:hidden">
             <FiMenu className="text-2xl mr-4" />
@@ -294,74 +324,85 @@ const Dashboard = () => {
             <button type="submit" className="ml-2 bg-blue-500 text-white p-2 rounded">Add</button>
           </div>
         </form>
-        <ul>
+        <TransitionGroup component="ul">
           {filteredTasks.map((task) => (
-            <li key={task.id} className="mb-2 p-4 bg-white rounded shadow flex justify-between items-center">
-              {editTaskId === task.id ? (
-                <div className="flex items-center">
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className={`border rounded p-2 ${editTitle === '' ? 'border-red-500' : ''}`}
-                  />
-                  <button onClick={handleEditSubmit} className="ml-2 bg-blue-500 text-white p-2 rounded">
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <Link to={`/tasks/${task.id}`} className="text-blue-500">
-                  {task.title}
-                </Link>
-              )}
-              <Menu as="div" className="relative inline-block text-left">
-                <Menu.Button className="text-gray-500 hover:text-gray-700 focus:outline-none">
-                  <FiMoreVertical className="h-6 w-6" />
-                </Menu.Button>
-                <Menu.Items className="absolute right-0 w-56 mt-2 origin-top-right bg-white border border-gray-300 divide-y divide-gray-100 rounded-md shadow-lg outline-none">
-                  <div className="px-4 py-3">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          className={`${
-                            active ? 'bg-gray-100' : ''
-                          } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                          onClick={() => handleEdit(task.id, task.title)}
-                        >
-                          Edit Title
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          className={`${
-                            active ? 'bg-gray-100' : ''
-                          } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                          onClick={() => handleRemindMe(task.id)}
-                        >
-                          Remind me
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          className={`${
-                            active ? 'bg-gray-100' : ''
-                          } group flex rounded-md items-center w-full px-2 py-2 text-sm text-red-500`}
-                          onClick={() => handleDelete(task.id)}
-                        >
-                          Delete Task
-                        </button>
-                      )}
-                    </Menu.Item>
+            <CSSTransition key={task.id} timeout={300} classNames="task">
+              <li className="mb-2 p-4 bg-white rounded shadow flex justify-between items-center">
+                {editTaskId === task.id ? (
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className={`border rounded p-2 ${editTitle === '' ? 'border-red-500' : ''}`}
+                    />
+                    <button onClick={handleEditSubmit} className="ml-2 bg-blue-500 text-white p-2 rounded">
+                      Save
+                    </button>
                   </div>
-                </Menu.Items>
-              </Menu>
-            </li>
+                ) : (
+                  <button onClick={() => handleTaskClick(task.id)} className="text-blue-500">
+                    {task.title}
+                  </button>
+                )}
+                <Menu as="div" className="relative inline-block text-left">
+                  <Menu.Button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <FiMoreVertical className="h-6 w-6" />
+                  </Menu.Button>
+                  <Menu.Items className="absolute right-0 w-56 mt-2 z-50 origin-top-right bg-white border border-gray-300 divide-y divide-gray-100 rounded-md shadow-lg outline-none">
+                    <div className="px-4 py-3">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                            onClick={() => handleEdit(task.id, task.title)}
+                          >
+                            Edit Title
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                            onClick={() => handleRemindMe(task.id)}
+                          >
+                            Remind me
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } group flex rounded-md items-center w-full px-2 py-2 text-sm text-red-500`}
+                            onClick={() => handleDelete(task.id)}
+                          >
+                            Delete Task
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Menu>
+              </li>
+            </CSSTransition>
           ))}
-        </ul>
+        </TransitionGroup>
+        {selectedTaskId !== null && (
+          <CSSTransition in={selectedTaskId !== null} timeout={300} classNames="task-details" unmountOnExit>
+            <TaskDetails
+              taskId={selectedTaskId}
+              onClose={() => setSelectedTaskId(null)}
+              fetchTasks={fetchTasks}
+            />
+          </CSSTransition>
+        )}
       </main>
     </div>
   );

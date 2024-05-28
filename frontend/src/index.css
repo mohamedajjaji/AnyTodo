@@ -11,3 +11,61 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* CSSTransition */
+.alert-enter {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+.alert-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.alert-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.alert-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.task-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.task-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.task-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.task-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.task-details-enter {
+  opacity: 0;
+  transform: translateX(100%);
+}
+.task-details-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.task-details-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+.task-details-exit-active {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 300ms, transform 300ms;
+}
