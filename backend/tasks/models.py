@@ -10,8 +10,9 @@ class Task(models.Model):
     title = models.CharField(max_length=255)
     notes = models.TextField(blank=True, null=True)
     due_date = models.DateTimeField(null=True, blank=True)
-    remind_me = models.BooleanField(default=False)
-    priority = models.BooleanField(default=False)
+    remind_me = models.DateTimeField(null=True, blank=True)
+    complete = models.BooleanField(default=False)
+    tags = models.CharField(max_length=255, blank=True, null=True)
     attachments = models.FileField(upload_to='attachments/', blank=True, null=True)
     subtasks = models.ManyToManyField('self', symmetrical=False, blank=True)
 
