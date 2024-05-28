@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu } from '@headlessui/react';
-import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUser, FiSearch, FiChevronDown, FiMenu, FiArrowLeft } from 'react-icons/fi';
+import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUser, FiSearch, FiChevronDown, FiMenu, FiArrowLeft, FiBell, FiBellOff } from 'react-icons/fi';
 import TaskDetails from './TaskDetails';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import dayjs from 'dayjs';
@@ -19,11 +19,18 @@ const Dashboard = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const refs = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTasks();
     fetchUserProfile();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const fetchTasks = async () => {
@@ -35,6 +42,9 @@ const Dashboard = () => {
       });
       setTasks(response.data);
       setFilteredTasks(response.data);
+      const now = dayjs();
+      const upcomingReminders = response.data.filter(task => task.remind_me && dayjs(task.due_date).isBefore(now));
+      setNotifications(upcomingReminders);
     } catch (error) {
       console.error(error);
       setAlert({ type: 'error', message: 'Error fetching tasks.', show: true });
@@ -158,6 +168,31 @@ const Dashboard = () => {
     }
   };
 
+  const handleNotificationClick = async (taskId) => {
+    setSelectedTaskId(taskId);
+    setNotifications(notifications.filter(task => task.id !== taskId));
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { remind_me: null },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      fetchTasks();
+    } catch (error) {
+      console.error(`Error updating task with ID: ${taskId}`, error);
+    }
+  };
+
+  const handleClickOutside = (event) => {
+    if (refs.current && !refs.current.contains(event.target)) {
+      setShowNotifications(false);
+    }
+  };
+
   const handleDelete = async (taskId) => {
     try {
       await axios.delete(`http://localhost:8000/api/tasks/${taskId}/`, {
@@ -262,6 +297,39 @@ const Dashboard = () => {
             <FiSearch className="absolute top-2.5 left-3 text-gray-500" />
           </div>
           <div className="flex items-center space-x-4">
+            <div className="relative" ref={refs}>
+              <button onClick={() => setShowNotifications(!showNotifications)} className="relative">
+                <FiBell className="text-2xl" />
+                {notifications.length > 0 && (
+                  <span className="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-50">
+                  <ul className="py-1">
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <li key={notification.id}>
+                        <button
+                          onClick={() => handleNotificationClick(notification.id)}
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left"
+                        >
+                          {notification.title}
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="flex flex-col items-center justify-center py-4 text-gray-500">
+                      <FiBellOff className="text-4xl mb-2" />
+                      <span>No notifications yet</span>
+                    </li>
+                  )}
+                  </ul>
+                </div>
+              )}
+            </div>
             <div className="h-6 border-l border-gray-300"></div>
             <Menu as="div" className="relative inline-block text-left">
               <Menu.Button className="flex items-center text-gray-500 hover:text-gray-700 focus:outline-none">
