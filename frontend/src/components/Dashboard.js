@@ -243,14 +243,14 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gray-100 md:flex-row">
+    <div className="flex flex-col bg-gray-100 md:flex-row h-screen p-5 md:overflow-hidden overflow-auto">
       {alert.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded shadow-md ${alert.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
           {alert.message}
           <button className="ml-4" onClick={() => setAlert({ ...alert, show: false })}>×</button>
         </div>
       )}
-      <aside className={`fixed z-40 top-0 left-0 w-64 bg-white shadow-md transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
+      <aside className={`fixed z-50 top-0 left-0 w-64 bg-white shadow-md transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
         <div className="px-8 py-4 flex justify-between items-center">
           <img src="/anytodo_logo.svg" alt="AnyTodo Logo" className="w-max mb-6 mt-6 mx-auto" />
           <button className="md:hidden" onClick={handleSidebarToggle}>
@@ -260,30 +260,30 @@ const Dashboard = () => {
         <nav className="flex-1 px-4 h-screen overflow-y-auto">
           <ul>
             <li>
-              <button onClick={() => handleFilter('day')} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
+              <button onClick={() => handleFilter('day')} className="flex items-center rounded-md shadow px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiSun className="mr-2" /> My Day
               </button>
             </li>
             <li>
-              <button onClick={() => handleFilter('week')} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
+              <button onClick={() => handleFilter('week')} className="flex items-center rounded-md shadow px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiCalendar className="mr-2" /> Next 7 Days
               </button>
             </li>
             <li>
-              <button onClick={() => handleFilter('all')} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
+              <button onClick={() => handleFilter('all')} className="flex items-center rounded-md shadow px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiClipboard className="mr-2" /> All My Tasks
               </button>
             </li>
             <li>
-              <Link to="/" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200">
+              <Link to="/" className="flex items-center rounded-md shadow px-4 py-2 text-gray-700 hover:bg-gray-200">
                 <FiList className="mr-2" /> My Calendar
               </Link>
             </li>
           </ul>
         </nav>
       </aside>
-      <main className="flex-1 p-6 md:ml-max relative">
-        <div className="flex justify-between items-center mb-4 bg-white p-4 rounded shadow">
+      <main className="flex-1 flex flex-col p-6 md:ml-max relative">
+        <div className="flex justify-between items-center mb-4 bg-white p-4 z-40 rounded shadow">
           <button onClick={handleSidebarToggle} className="md:hidden">
             <FiMenu className="text-2xl mr-4" />
           </button>
@@ -308,7 +308,7 @@ const Dashboard = () => {
                 )}
               </button>
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-50">
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-40">
                   <ul className="py-1">
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
@@ -381,22 +381,11 @@ const Dashboard = () => {
             </Menu>
           </div>
         </div>
-        <form onSubmit={handleAddTask} className="mb-4">
-          <div className="flex items-center">
-            <input
-              type="text"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              className="flex-1 p-2 border border-gray-300 rounded"
-              placeholder="Add task"
-            />
-            <button type="submit" className="ml-2 bg-blue-500 text-white p-2 rounded">Add</button>
-          </div>
-        </form>
+        <div className="flex-1 overflow-y-auto mb-4">
         <TransitionGroup component="ul">
           {filteredTasks.map((task) => (
             <CSSTransition key={task.id} timeout={300} classNames="task">
-              <li className="mb-2 p-4 bg-white rounded shadow flex justify-between items-center">
+              <li className="mb-2 p-4 bg-white rounded shadow text-gray-700 hover:bg-gray-200 flex justify-between items-center">
                 {editTaskId === task.id ? (
                   <div className="flex items-center">
                     <input
@@ -410,7 +399,7 @@ const Dashboard = () => {
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => handleTaskClick(task.id)} className="text-blue-500">
+                  <button onClick={() => handleTaskClick(task.id)} className="text-gray-700 w-full text-left">
                     {task.title}
                   </button>
                 )}
@@ -463,6 +452,18 @@ const Dashboard = () => {
             </CSSTransition>
           ))}
         </TransitionGroup>
+        </div>
+        <form onSubmit={handleAddTask} className="bg-white p-4 rounded shadow">
+          <div className="flex items-center">
+            <input
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              className="flex-1 p-2 border border-sky-700 rounded"
+              placeholder="Add task"
+            />
+          </div>
+        </form>
         {selectedTaskId !== null && (
           <CSSTransition in={selectedTaskId !== null} timeout={300} classNames="task-details" unmountOnExit>
             <TaskDetails
