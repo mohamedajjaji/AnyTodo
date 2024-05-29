@@ -255,6 +255,25 @@ const Dashboard = () => {
     setFilteredTasks(filtered);
   };
 
+  const handleCompleteToggle = async (taskId, currentComplete) => {
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { complete: !currentComplete },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setTasks(tasks.map(task => (task.id === taskId ? { ...task, complete: !currentComplete } : task)));
+      setFilteredTasks(filteredTasks.map(task => (task.id === taskId ? { ...task, complete: !currentComplete } : task)));
+    } catch (error) {
+      console.error(`Error updating task with ID: ${taskId}`, error);
+      setAlert({ type: 'error', message: 'Error updating task status.', show: true });
+    }
+  };
+
   return (
     <div className="flex flex-col bg-gray-100 md:flex-row h-screen p-5 font-semibold md:overflow-hidden overflow-auto">
       {alert.show && (
@@ -398,8 +417,12 @@ const Dashboard = () => {
         <TransitionGroup component="ul">
           {filteredTasks.map((task) => (
             <CSSTransition key={task.id} timeout={300} classNames="task">
-              <li className="mb-2 p-4 bg-white rounded shadow text-gray-700 hover:bg-gray-200 flex justify-between items-center">
-                {editTaskId === task.id ? (
+              <li className={`mb-2 p-4 bg-white rounded shadow text-gray-700 hover:bg-gray-200 flex justify-between items-center ${task.complete ? 'line-through text-gray-500' : ''}`}>
+                <button
+                  className={`w-6 h-6 mr-2 rounded-full border-2 ${task.complete ? 'bg-green-500 border-green-500' : 'border-gray-400'}`}
+                  onClick={() => handleCompleteToggle(task.id, task.complete)}>
+                </button>
+                {editTaskId === task.id && !task.complete ? (
                   <div className="flex items-center">
                     <input
                       type="text"
@@ -422,25 +445,27 @@ const Dashboard = () => {
                   </Menu.Button>
                   <Menu.Items className="absolute right-0 w-56 mt-2 z-50 origin-top-right bg-white border border-gray-300 divide-y divide-gray-100 rounded-md shadow-lg outline-none">
                     <div className="px-4 py-3">
-                      <Menu.Item>
+                      <Menu.Item disabled={task.complete}>
                         {({ active }) => (
                           <button
                             className={`${
                               active ? 'bg-gray-100' : ''
                             } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                            onClick={() => handleEdit(task.id, task.title)}
+                            onClick={() => !task.complete && handleEdit(task.id, task.title)}
+                            disabled={task.complete}
                           >
                             Edit Title
                           </button>
                         )}
                       </Menu.Item>
-                      <Menu.Item>
+                      <Menu.Item disabled={task.complete}>
                         {({ active }) => (
                           <button
                             className={`${
                               active ? 'bg-gray-100' : ''
                             } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                            onClick={() => handleRemindMe(task.id)}
+                            onClick={() => !task.complete && handleRemindMe(task.id)}
+                            disabled={task.complete}
                           >
                             Remind me
                           </button>
