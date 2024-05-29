@@ -14,7 +14,14 @@ class Task(models.Model):
     complete = models.BooleanField(default=False)
     tags = models.CharField(max_length=255, blank=True, null=True)
     attachments = models.FileField(upload_to='attachments/', blank=True, null=True)
-    subtasks = models.ManyToManyField('self', symmetrical=False, blank=True)
+
+    def __str__(self):
+        return self.title
+
+class Subtask(models.Model):
+    task = models.ForeignKey(Task, related_name='subtasks', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    completed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
