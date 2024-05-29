@@ -6,6 +6,8 @@ import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUse
 import TaskDetails from './TaskDetails';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import dayjs from 'dayjs';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -21,6 +23,9 @@ const Dashboard = () => {
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
+  const [reminderDate, setReminderDate] = useState(null);
+  const [reminderTaskId, setReminderTaskId] = useState(null);
   const refs = useRef(null);
   const navigate = useNavigate();
 
@@ -148,24 +153,30 @@ const Dashboard = () => {
     }
   };
 
-  const handleRemindMe = async (taskId) => {
+  const handleRemindMe = (taskId) => {
+    setReminderTaskId(taskId);
+    setShowReminder(true);
+  };
+
+  const handleSetReminder  = async () => {
     try {
-      const task = tasks.find(task => task.id === taskId);
       await axios.patch(
-        `http://localhost:8000/api/tasks/${taskId}/`,
-        { remind_me: !task.remind_me },
+        `http://localhost:8000/api/tasks/${reminderTaskId}/`,
+        { remind_me: reminderDate },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );
-      setTasks(tasks.map(task => (task.id === taskId ? { ...task, remind_me: !task.remind_me } : task)));
-      setFilteredTasks(filteredTasks.map(task => (task.id === taskId ? { ...task, remind_me: !task.remind_me } : task)));
+      setTasks(tasks.map(task => (task.id === reminderTaskId ? { ...task, remind_me: reminderDate } : task)));
+      setFilteredTasks(filteredTasks.map(task => (task.id === reminderTaskId ? { ...task, remind_me: reminderDate } : task)));
       setAlert({ type: 'success', message: 'Task reminder updated.', show: true });
-      setSelectedTaskId(taskId);
+      setShowReminder(false);
+      setReminderDate(null);
+      setReminderTaskId(null);
     } catch (error) {
-      console.error(`Error updating task with ID: ${taskId}`, error);
+      console.error(`Error updating task with ID: ${reminderTaskId}`, error);
       setAlert({ type: 'error', message: 'Error updating task reminder.', show: true });
     }
   };
@@ -192,6 +203,7 @@ const Dashboard = () => {
   const handleClickOutside = (event) => {
     if (refs.current && !refs.current.contains(event.target)) {
       setShowNotifications(false);
+      setShowReminder(false);
     }
   };
 
@@ -244,7 +256,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gray-100 md:flex-row h-screen p-5 md:overflow-hidden overflow-auto">
+    <div className="flex flex-col bg-gray-100 md:flex-row h-screen p-5 font-semibold md:overflow-hidden overflow-auto">
       {alert.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded shadow-md ${alert.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
           {alert.message}
@@ -474,6 +486,35 @@ const Dashboard = () => {
             />
           </CSSTransition>
         )}
+        <CSSTransition in={showReminder} timeout={300} classNames="popup" unmountOnExit>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg" ref={refs}>
+              <h2 className="text-lg text-center mb-4">Reminder</h2>
+              <DatePicker
+                selected={reminderDate}
+                onChange={(date) => setReminderDate(date)}
+                showTimeSelect
+                dateFormat="Pp"
+                inline
+                className="w-full mb-4"
+              />
+              <div className="flex mt-4">
+                <button
+                  onClick={() => setShowReminder(false)}
+                  className="flex-1 justify-start px-4 py-2 mr-2 bg-gray-300 text-black hover:bg-gray-200 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSetReminder}
+                  className="flex-1 justify-end px-4 py-2 ml-2 bg-blue-500 text-white hover:bg-blue-400 rounded-lg"
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          </div>
+        </CSSTransition>
       </main>
     </div>
   );
