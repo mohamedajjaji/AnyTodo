@@ -126,9 +126,10 @@ const Dashboard = () => {
 
   const handleEditSubmit = async () => {
     try {
+      const currentDateTime = dayjs().format();
       await axios.patch(
         `http://localhost:8000/api/tasks/${editTaskId}/`,
-        { title: editTitle },
+        { title: editTitle, due_date: currentDateTime },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
