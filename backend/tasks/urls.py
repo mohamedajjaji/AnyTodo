@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import signup, profile, TaskViewSet, change_password, delete_account
+from .views import signup, profile, TaskViewSet, SubtaskViewSet, change_password, delete_account
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r'subtasks', SubtaskViewSet, basename='subtask')
 
 urlpatterns = [
     path('signup/', signup, name='signup'),

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Task
+from .models import User, Task, Subtask
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class SubtaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subtask
+        fields = '__all__'
+
 class TaskSerializer(serializers.ModelSerializer):
+    subtasks = SubtaskSerializer(many=True, read_only=True)
+
     class Meta:
         model = Task
         fields = '__all__'
