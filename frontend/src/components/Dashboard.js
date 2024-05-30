@@ -508,6 +508,7 @@ const Dashboard = () => {
               taskId={selectedTaskId}
               onClose={() => setSelectedTaskId(null)}
               fetchTasks={fetchTasks}
+              handleCompleteToggle={handleCompleteToggle}
             />
           </CSSTransition>
         )}
