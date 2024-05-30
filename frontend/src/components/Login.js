@@ -15,6 +15,18 @@ const Login = () => {
         password,
       });
       localStorage.setItem('token', response.data.access);
+
+      const profileResponse = await axios.get('http://localhost:8000/api/profile/', {
+        headers: {
+          Authorization: `Bearer ${response.data.access}`,
+        },
+      });
+
+      if (profileResponse.data.profile_picture) {
+        const profilePictureUrl = `http://localhost:8000${profileResponse.data.profile_picture}`;
+        localStorage.setItem('profilePicture', profilePictureUrl);
+      }
+
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
