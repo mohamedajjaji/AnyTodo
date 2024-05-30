@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { FiArrowRight, FiBell, FiTag, FiCheckSquare, FiTrash2, FiX, FiCircle } from 'react-icons/fi';
+import { FiArrowRight, FiBell, FiTag, FiCheckSquare, FiTrash2, FiX, FiCircle, FiTrash } from 'react-icons/fi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { useDropzone } from 'react-dropzone';
+import dayjs from 'dayjs';
 
 const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
   const [task, setTask] = useState(null);
@@ -156,10 +158,12 @@ const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
     }
   };
 
-  const handleAttachmentChange = async (e) => {
-    const file = e.target.files[0];
+  const onDrop = useCallback(async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+
     const formData = new FormData();
-    formData.append('attachment', file);
+    formData.append('file', file);
     formData.append('task', taskId);
 
     try {
@@ -173,10 +177,26 @@ const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
           },
         }
       );
-      setAttachments([...attachments, response.data]);
+      setAttachments((prevAttachments) => [...prevAttachments, response.data]);
       fetchTasks();
     } catch (error) {
       console.error('Error adding attachment:', error);
+    }
+  }, [taskId, fetchTasks]);
+
+  const { getRootProps, getInputProps } = useDropzone({ onDrop });
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/attachments/${attachmentId}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setAttachments(attachments.filter(attachment => attachment.id !== attachmentId));
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
     }
   };
 
@@ -238,9 +258,9 @@ const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
   return (
     <div className="fixed inset-y-0 right-0 w-full md:w-1/3 bg-white shadow-lg p-4 z-50 overflow-y-auto task-details" ref={refs}>
       <div className="flex justify-between items-center mb-4">
-      <button onClick={onClose} className="text-gray-500 hover:text-gray-700 mb-4">
-        <FiArrowRight className="text-2xl" />
-      </button>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-700 mb-4">
+          <FiArrowRight className="text-2xl" />
+        </button>
         <div className="flex items-center space-x-2">
           <button
             onClick={handleCompleteTask}
@@ -341,25 +361,25 @@ const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
       </div>
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">Attachments</label>
-        <input
-          type="file"
-          onChange={handleAttachmentChange}
-          className="block w-full text-sm text-gray-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-full file:border-0
-            file:text-sm file:font-semibold
-            file:bg-blue-500 file:text-white
-            hover:file:bg-blue-600
-            disabled:opacity-50 disabled:cursor-not-allowed
-          "
-          disabled={task.complete}
-        />
-        <ul className="mt-2">
+        <div {...getRootProps()} className="border-dashed border-2 border-gray-500 hover:border-blue-500 mt-4 p-2 rounded hover:text-blue-500 text-gray-700 text-center cursor-pointer">
+          <input {...getInputProps()}/>
+          Click to add / drop your files here
+        </div> 
+        <ul className="mt-4">
           {attachments.map((attachment) => (
-            <li key={attachment.id}>
-              <a href={attachment.file} className="text-blue-500" target="_blank" rel="noopener noreferrer">
-                {attachment.file.split('/').pop()}
-              </a>
+            <li key={attachment.id} className="flex items-center justify-between mt-2">
+              <div>
+                <a href={attachment.file} className="text-blue-500" target="_blank" rel="noopener noreferrer">
+                  {attachment.file.split('/').pop()}
+                </a>
+                <p className="text-gray-400 text-xs">
+                  {dayjs(attachment.uploaded_at).format('MMMM D, YYYY')}
+                </p>
+              </div>
+              <FiTrash
+                className="text-gray-400 hover:text-red-500 cursor-pointer"
+                onClick={() => handleDeleteAttachment(attachment.id)}
+              />
             </li>
           ))}
         </ul>
