@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FiArrowLeft } from 'react-icons/fi';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -198,7 +199,10 @@ const Profile = () => {
           <button className="ml-4" onClick={() => setAlert({ ...alert, show: false })}>×</button>
         </div>
       )}
-      <form onSubmit={handleUpdateProfile} className="bg-white p-6 rounded shadow-md w-80">
+      <form onSubmit={handleUpdateProfile} className="bg-white p-6 rounded-lg shadow-md w-80">
+          <button className="mb-4 text-gray-500 hover:text-gray-700 mb-4">
+            <FiArrowLeft className="text-2xl" onClick={() => navigate('/dashboard')}/>
+          </button>
         <div 
           className="relative flex justify-center mb-4" 
           onMouseEnter={() => setShowDeleteButton(true)}
