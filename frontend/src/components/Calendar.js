@@ -56,7 +56,7 @@ const Calendar = ({ tasks, handleTaskClick }) => {
   };
 
   return (
-    <div className="bg-white rounded shadow p-4 text-gray-900">
+    <div className="bg-white rounded shadow p-4">
       <div className="flex justify-between items-center mb-4">
         <button onClick={handlePrevMonth}>
             <FiArrowLeft className="text-2xl"/>

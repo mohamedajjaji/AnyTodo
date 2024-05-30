@@ -250,12 +250,12 @@ const Profile = () => {
           onChange={handleProfilePictureChange}
           className="mb-4 p-2 w-full border border-gray-300 rounded"
         />
-        <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded mb-4">Update Profile</button>
+        <button type="submit" className="bg-blue-500 hover:bg-blue-400 text-white p-2 w-full rounded mb-4">Update Profile</button>
 
         <button
           type="button"
           onClick={() => setShowChangePassword(true)}
-          className="bg-blue-500 text-white p-2 w-full rounded mb-4"
+          className="bg-blue-500 hover:bg-blue-400 text-white p-2 w-full rounded mb-4"
         >
           Change Password
         </button>
@@ -263,7 +263,7 @@ const Profile = () => {
         <button
           type="button"
           onClick={() => setShowDeleteWarning(true)}
-          className="bg-red-500 text-white p-2 w-full rounded"
+          className="bg-red-500 hover:bg-red-400 text-white p-2 w-full rounded"
         >
           Delete Account
         </button>
