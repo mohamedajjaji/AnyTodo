@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu } from '@headlessui/react';
-import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUser, FiSearch, FiChevronDown, FiMenu, FiArrowLeft, FiBell, FiBellOff } from 'react-icons/fi';
+import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUser, FiSearch, FiChevronDown, FiMenu, FiArrowLeft, FiBell, FiBellOff, FiGithub, FiLinkedin } from 'react-icons/fi';
 import TaskDetails from './TaskDetails';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import dayjs from 'dayjs';
@@ -541,6 +541,17 @@ const Dashboard = () => {
             </div>
           </div>
         </CSSTransition>
+        <footer className="mt-auto flex justify-between text-gray-700 items-center bg-white p-4 shadow rounded">
+          <span>&copy; 2024 - ANYTODO</span>
+          <div className="flex space-x-4">
+            <a href="https://github.com/mohamedajjaji" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 flex items-center">
+              <FiGithub className="mr-2" /> GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/mohamedajjaji/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 flex items-center">
+              <FiLinkedin className="mr-2" /> LinkedIn
+            </a>
+          </div>
+        </footer>
       </main>
     </div>
   );
