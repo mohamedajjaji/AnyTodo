@@ -13,7 +13,6 @@ class Task(models.Model):
     remind_me = models.DateTimeField(null=True, blank=True)
     complete = models.BooleanField(default=False)
     tags = models.CharField(max_length=255, blank=True, null=True)
-    attachments = models.FileField(upload_to='attachments/', blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -25,3 +24,11 @@ class Subtask(models.Model):
 
     def __str__(self):
         return self.title
+
+class Attachment(models.Model):
+    task = models.ForeignKey(Task, related_name='attachments', on_delete=models.CASCADE)
+    file = models.FileField(upload_to='attachments/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.file.name

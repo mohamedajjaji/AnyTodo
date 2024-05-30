@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import signup, profile, TaskViewSet, SubtaskViewSet, change_password, delete_account
+from .views import signup, profile, TaskViewSet, SubtaskViewSet, change_password, delete_account, AttachmentViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r'attachments', AttachmentViewSet, basename='attachment')
 router.register(r'subtasks', SubtaskViewSet, basename='subtask')
 
 urlpatterns = [

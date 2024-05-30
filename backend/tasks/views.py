@@ -3,8 +3,8 @@ from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
-from .models import User, Task, Subtask
-from .serializers import UserSerializer, TaskSerializer, SubtaskSerializer
+from .models import User, Task, Subtask, Attachment
+from .serializers import UserSerializer, TaskSerializer, SubtaskSerializer, AttachmentSerializer
 
 @api_view(['POST'])
 def signup(request):
@@ -69,6 +69,13 @@ class SubtaskViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+class AttachmentViewSet(viewsets.ModelViewSet):
+    serializer_class = AttachmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Attachment.objects.filter(task__user=self.request.user)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
