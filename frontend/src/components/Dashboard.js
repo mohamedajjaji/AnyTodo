@@ -6,6 +6,7 @@ import { FiMoreVertical, FiLogOut, FiSun, FiCalendar, FiClipboard, FiList, FiUse
 import TaskDetails from './TaskDetails';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import dayjs from 'dayjs';
+import Calendar from './Calendar';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const [showReminder, setShowReminder] = useState(false);
   const [reminderDate, setReminderDate] = useState(null);
   const [reminderTaskId, setReminderTaskId] = useState(null);
+  const [showCalendar, setShowCalendar] = useState(false);
   const refs = useRef(null);
   const navigate = useNavigate();
 
@@ -253,6 +255,11 @@ const Dashboard = () => {
     }
 
     setFilteredTasks(filtered);
+    setShowCalendar(false);
+  };
+
+  const handleShowCalendar = () => {
+    setShowCalendar(true);
   };
 
   const handleCompleteToggle = async (taskId, currentComplete) => {
@@ -307,9 +314,9 @@ const Dashboard = () => {
               </button>
             </li>
             <li>
-              <Link to="/" className="flex items-center rounded-md shadow px-4 py-2 text-gray-700 hover:bg-gray-200">
+              <button onClick={handleShowCalendar} className="flex items-center rounded-md shadow px-4 py-2 text-gray-700 hover:bg-gray-200 w-full text-left">
                 <FiList className="mr-2" /> My Calendar
-              </Link>
+              </button>
             </li>
           </ul>
         </nav>
@@ -414,6 +421,9 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto mb-4">
+        {showCalendar ? (
+          <Calendar tasks={tasks} handleTaskClick={handleTaskClick} />
+        ) : (
         <TransitionGroup component="ul">
           {filteredTasks.map((task) => (
             <CSSTransition key={task.id} timeout={300} classNames="task">
@@ -490,6 +500,7 @@ const Dashboard = () => {
             </CSSTransition>
           ))}
         </TransitionGroup>
+        )}
         </div>
         <form onSubmit={handleAddTask} className="bg-white p-4 rounded shadow">
           <div className="flex items-center">
