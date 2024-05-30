@@ -77,6 +77,9 @@ class AttachmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Attachment.objects.filter(task__user=self.request.user)
 
+    def perform_create(self, serializer):
+        serializer.save()
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
