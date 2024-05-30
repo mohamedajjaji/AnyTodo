@@ -1,9 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiBell, FiTag, FiCheckSquare, FiTrash2, FiX, FiCircle } from 'react-icons/fi';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
 const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
   const [task, setTask] = useState(null);
+  const [notes, setNotes] = useState('');
+  const [subtasks, setSubtasks] = useState([]);
+  const [newSubtask, setNewSubtask] = useState('');
+  const [attachments, setAttachments] = useState([]);
+  const [remindMe, setRemindMe] = useState(null);
+  const refs = useRef(null);
+
+  const handleClickOutside = useCallback((event) => {
+    if (refs.current && !refs.current.contains(event.target)) {
+      onClose();
+    }
+  }, [onClose]);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -14,35 +29,341 @@ const TaskDetails = ({ taskId, onClose, fetchTasks }) => {
           },
         });
         setTask(response.data);
+        setNotes(response.data.notes || '');
+        setSubtasks(response.data.subtasks || []);
+        setAttachments(response.data.attachments || []);
+        setRemindMe(response.data.remind_me ? new Date(response.data.remind_me) : null);
       } catch (error) {
         console.error(error);
       }
     };
-
     fetchTask();
-  }, [taskId]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [taskId, handleClickOutside]);
 
-  useEffect(() => {
-    if (taskId) {
+  const handleTitleChange = async (e) => {
+    const updatedTitle = e.target.value;
+    setTask({ ...task, title: updatedTitle });
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { title: updatedTitle },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
       fetchTasks();
+    } catch (error) {
+      console.error('Error updating title:', error);
     }
-  }, [taskId, fetchTasks]);
+  };
+
+  const handleTagsChange = async (e) => {
+    const updatedTags = e.target.value;
+    setTask({ ...task, tags: updatedTags });
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { tags: updatedTags },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating tags:', error);
+    }
+  };
+
+  const handleNotesChange = async (e) => {
+    const updatedNotes = e.target.value;
+    setNotes(updatedNotes);
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { notes: updatedNotes },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating notes:', error);
+    }
+  };
+
+  const handleAddSubtask = async (e) => {
+    if (!newSubtask.trim()) return;
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/api/subtasks/`,
+        { title: newSubtask, task: taskId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setSubtasks([...subtasks, response.data]);
+      setNewSubtask('');
+      fetchTasks();
+    } catch (error) {
+      console.error('Error adding subtask:', error);
+    }
+  };
+
+  const handleToggleSubtask = async (subtaskId) => {
+    try {
+      const subtask = subtasks.find(subtask => subtask.id === subtaskId);
+      await axios.patch(
+        `http://localhost:8000/api/subtasks/${subtaskId}/`,
+        { completed: !subtask.completed },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setSubtasks(subtasks.map(subtask =>
+        subtask.id === subtaskId ? { ...subtask, completed: !subtask.completed } : subtask
+      ));
+      fetchTasks();
+    } catch (error) {
+      console.error('Error toggling subtask:', error);
+    }
+  };
+
+  const handleDeleteSubtask = async (subtaskId) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/subtasks/${subtaskId}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setSubtasks(subtasks.filter(subtask => subtask.id !== subtaskId));
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+    }
+  };
+
+  const handleAttachmentChange = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('attachment', file);
+    formData.append('task', taskId);
+
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/api/attachments/`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      setAttachments([...attachments, response.data]);
+      fetchTasks();
+    } catch (error) {
+      console.error('Error adding attachment:', error);
+    }
+  };
+
+  const handleCompleteTask = async () => {
+    try {
+      const updatedCompleteStatus = !task.complete;
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { complete: updatedCompleteStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setTask({ ...task, complete: updatedCompleteStatus });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error toggling complete status:', error);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    try {
+      await axios.delete(`http://localhost:8000/api/tasks/${taskId}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      fetchTasks();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleRemindMeChange = async (date) => {
+    setRemindMe(date);
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/tasks/${taskId}/`,
+        { remind_me: date.toISOString() },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating remind me:', error);
+    }
+  };
 
   if (!task) {
-    return ;
+    return null;
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full md:w-1/3 bg-white shadow-lg p-4 z-50 overflow-y-auto task-details">
+    <div className="fixed inset-y-0 right-0 w-full md:w-1/3 bg-white shadow-lg p-4 z-50 overflow-y-auto task-details" ref={refs}>
+      <div className="flex justify-between items-center mb-4">
       <button onClick={onClose} className="text-gray-500 hover:text-gray-700 mb-4">
         <FiArrowRight className="text-2xl" />
       </button>
-      <h1 className="text-2xl font-bold mb-4">{task.title}</h1>
-      <p className="mb-2"><strong>Notes:</strong> {task.notes}</p>
-      <p className="mb-2"><strong>Due date:</strong> {task.due_date}</p>
-      <p className="mb-2"><strong>Priority:</strong> {task.priority ? 'Yes' : 'No'}</p>
-      <p className="mb-2"><strong>Remind me:</strong> {task.remind_me ? 'Yes' : 'No'}</p>
-      {/* Add more fields */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleCompleteTask}
+            className={`flex items-center space-x-1 px-2 py-1 rounded ${task.complete ? 'bg-green-500 text-white' : 'bg-gray-300 text-black hover:bg-gray-400'}`}
+          >
+            <FiCheckSquare />
+            <span>{task.complete ? 'Task complete' : 'Mark as complete'}</span>
+          </button>
+          <button
+            onClick={handleDeleteTask}
+            className="flex items-center space-x-1 bg-red-500 px-2 py-1 rounded text-white hover:bg-red-600"
+          >
+            <FiTrash2 />
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+      <input
+        type="text"
+        value={task.title}
+        onChange={handleTitleChange}
+        className="text-3xl focus:outline-none font-bold mb-4 w-full"
+        disabled={task.complete}
+      />
+      <div className="flex items-center space-x-2 mb-4">
+        <button className="flex items-center space-x-1 bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">
+          <FiTag />
+          <input
+            type="text"
+            value={task.tags}
+            onChange={handleTagsChange}
+            className="bg-transparent border-none focus:outline-none focus:ring-0 text-center"
+            placeholder="Tags"
+            disabled={task.complete}
+          />
+        </button>
+        <div className={`flex items-center space-x-1 px-2 py-1 rounded ${remindMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black hover:bg-gray-300'}`}>
+          <FiBell />
+          <DatePicker
+            selected={remindMe}
+            onChange={handleRemindMeChange}
+            showTimeSelect
+            timeFormat="HH:mm"
+            timeIntervals={15}
+            dateFormat="MMMM d, yyyy h:mm aa"
+            className="bg-transparent border-none focus:outline-none focus:ring-0 text-center"
+            placeholderText="Remind me"
+            disabled={task.complete}
+          />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-2">Notes</label>
+        <textarea
+          value={notes}
+          onChange={handleNotesChange}
+          className="w-full p-2 border border-gray-300 rounded"
+          placeholder="Insert your notes here"
+          disabled={task.complete}
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-2">Subtasks</label>
+        <ul>
+          <TransitionGroup component={null}>
+            {subtasks.map((subtask) => (
+              <CSSTransition key={subtask.id} timeout={300} classNames="subtask">
+                <li className={`flex items-center space-x-2 mb-2 p-2 rounded ${subtask.completed ? 'bg-gray-200' : 'bg-white'} hover:bg-gray-100`}>
+                  <FiCircle
+                    className={`cursor-pointer ${subtask.completed ? 'text-green-500' : 'text-gray-500'}`}
+                    onClick={() => handleToggleSubtask(subtask.id)}
+                  />
+                  <span className={`flex-1 ${subtask.completed ? 'line-through' : ''}`}>{subtask.title}</span>
+                  <FiX
+                    className="text-gray-400 hover:text-red-500 cursor-pointer"
+                    onClick={() => handleDeleteSubtask(subtask.id)}
+                  />
+                </li>
+              </CSSTransition>
+            ))}
+          </TransitionGroup>
+        </ul>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAddSubtask(e);
+          }}
+        >
+          <input
+            type="text"
+            value={newSubtask}
+            onChange={(e) => setNewSubtask(e.target.value)}
+            className="flex-1 p-2 border border-gray-300 rounded w-full"
+            placeholder="Add a new subtask"
+            disabled={task.complete}
+          />
+        </form>
+      </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-2">Attachments</label>
+        <input
+          type="file"
+          onChange={handleAttachmentChange}
+          className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-500 file:text-white
+            hover:file:bg-blue-600
+            disabled:opacity-50 disabled:cursor-not-allowed
+          "
+          disabled={task.complete}
+        />
+        <ul className="mt-2">
+          {attachments.map((attachment) => (
+            <li key={attachment.id}>
+              <a href={attachment.file} className="text-blue-500" target="_blank" rel="noopener noreferrer">
+                {attachment.file.split('/').pop()}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
