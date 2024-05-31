@@ -73,13 +73,16 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (alert.show) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+    } else if (alert.show) {
       const timer = setTimeout(() => {
         setAlert({ ...alert, show: false });
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [alert]);
+  }, [alert, navigate]);  
 
   const getInitial = (name) => {
     return name ? name.charAt(0).toUpperCase() : '';

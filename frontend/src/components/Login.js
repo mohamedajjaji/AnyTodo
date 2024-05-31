@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -11,6 +11,13 @@ const Login = () => {
   const [alert, setAlert] = useState({ type: '', message: '', show: false });
   const [inputError, setInputError] = useState({ username: false, password: false });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -85,6 +92,9 @@ const Login = () => {
           </div>
         </CSSTransition>
       )}
+      <button className="flex justify-between p-4 mr-4 rounded-full text-gray-500 hover:text-gray-700 bg-white hover:bg-gray-50 shadow-md">
+        <FiArrowLeft className="text-2xl" onClick={() => navigate('/')}/>
+      </button>
       <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-96">
         <h2 className="text-2xl font-semibold text-gray-700 mb-8 text-left">Sign in to your account</h2>
         <input
@@ -113,7 +123,9 @@ const Login = () => {
         <button type="submit" className="bg-blue-500 hover:bg-blue-400 text-white p-2 w-full rounded">Sign in</button>
         <div className="text-sm text-left mt-4">
           <span>Don't have an account? </span>
-          <Link to="/signup" className="text-sm text-blue-500 hover:text-blue-400 font-semibold">Sign up</Link>
+          <button onClick={() => navigate('/signup')} className="text-sm text-blue-500 hover:text-blue-400 font-semibold">
+            Sign up
+          </button>
         </div>
       </form>
     </div>
